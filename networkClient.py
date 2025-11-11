@@ -4,26 +4,27 @@ class NetworkClient:
     def __init__(self, server_ip, server_port):
         self.ip = server_ip
         self.port = server_port
-
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((self.ip, self.port))
-    
-    # Returns the IP
-    def getIP(self):
-        return self.ip
-    
-    # Returns the Port
-    def getPort(self):
-        return self.port
-    
+
     def send(self, msg):
-        if (isinstance(msg, list)): # Combines into one string separated by '<'
+        endChar = "<"
+        endChar = endChar.encode()
+
+        if isinstance(msg, list):
             msg = "<".join(msg)
-
-        if (not isinstance(msg, bytes)): # Encodes the message if not already
+        if not isinstance(msg, bytes):
             msg = msg.encode()
+        
+        self.client_socket.sendall(msg + endChar)
 
-        self.client_socket.sendall(msg)
-    
     def receive(self):
-        return self.client_socket.recv(1024).decode().split('<') # Decodes message and splits for '<'
+        data = self.client_socket.recv(1024)
+        if not data:
+            print("Server closed connection.")
+            return None
+        decoded = data.decode().split('<')
+        return decoded
+
+    def stop(self):
+        self.client_socket.close()

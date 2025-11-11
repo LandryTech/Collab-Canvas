@@ -1,21 +1,22 @@
+# 10.30.72.77 - Emerson eduroam
+
 from networkClient import NetworkClient
 
 def main():
-    client = NetworkClient("127.0.0.1", 5000)
+    client = NetworkClient("10.30.72.77", 5002)
+    print("Connected! Type messages to send. Type 'exit' to quit.\n")
 
-    print("Connected to server! Type a message and press Enter.")
     while True:
         msg = input("> ")
         if msg.lower() == "exit":
-            print("Closing connection.")
+            client.stop()
             break
+
         client.send(msg)
-        try:
-            response = client.receive()
-            print("Received:", response)
-        except:
-            print("Server disconnected.")
-            break
+        response = client.receive()
+        if response:
+            for part in response:
+                print("Received: ", part)
 
 if __name__ == "__main__":
     main()
