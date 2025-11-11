@@ -22,3 +22,8 @@ print(f"toString(): {c.toString()}")
 print(f"getWidth(): {c.getWidth()}, getHeight(): {c.getHeight()}, getPosX(): {c.getPosX()}, getPosY(): {c.getPosY()}, getRad(): {c.getRad()}")
 
 print()
+
+print(a.toStringEncode())
+print(b.toStringEncode())
+
+print()
