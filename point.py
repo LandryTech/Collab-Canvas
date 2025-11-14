@@ -23,13 +23,16 @@ class Point:
     
     @classmethod
     def initialization(sI, msgPoint, width, height):
-        msgSplit = sI.toStringDecode(msgPoint)
-        xPerc = float(msgSplit[0])
-        yPerc = float(msgSplit[1])
-        rPerc = float(msgSplit[2])
-        color = ast.literal_eval(msgSplit[3])
+        try:
+            msgSplit = sI.toStringDecode(msgPoint)
+            xPerc = float(msgSplit[0])
+            yPerc = float(msgSplit[1])
+            rPerc = float(msgSplit[2])
+            color = ast.literal_eval(msgSplit[3])
 
-        return sI((xPerc * width), (yPerc * height), width, height, (rPerc / (height / width)), color)
+            return sI((xPerc * width), (yPerc * height), width, height, (rPerc / (height / width)), color)
+        except Exception:
+            return None
     
     # Returns relative screen position (percentage of screen width) in the X direction
     def getPercX(self):
@@ -104,3 +107,9 @@ class Point:
     @staticmethod
     def toStringDecode(msgPoint):
         return (msgPoint.decode()).split(':')
+    
+    def toStringValidate(sI, msgPoint):
+        msgSplit = sI.toStringDecode(msgPoint)
+        #ex. '0.5:0.5:2.8125:(255, 192, 203)'
+
+
