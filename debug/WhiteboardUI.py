@@ -1,6 +1,5 @@
 import pygame
 import sys
-import math
 from point import Point
 
 class WhiteboardUI:
@@ -18,8 +17,6 @@ class WhiteboardUI:
         self.current_color = Point.BLACK
         self.current_radius = 5
         self.is_drawing = False
-        self.is_erasing = False
-        self.last_pos = None  # Track last position for interpolation
         
         # UI colors
         self.bg_color = (255, 255, 255)
@@ -67,12 +64,8 @@ class WhiteboardUI:
             rect = pygame.Rect(size_start_x + i * (button_size + spacing), start_y, button_size, button_size)
             self.size_buttons.append({'rect': rect, 'size': size})
         
-        # Eraser button
-        eraser_x = size_start_x + len(self.brush_sizes) * (button_size + spacing) + 40
-        self.eraser_button = pygame.Rect(eraser_x, start_y, 100, button_size)
-        
         # Clear button
-        clear_x = eraser_x + 110
+        clear_x = size_start_x + len(self.brush_sizes) * (button_size + spacing) + 40
         self.clear_button = pygame.Rect(clear_x, start_y, 100, button_size)
     
     def draw_toolbar(self):
@@ -82,8 +75,8 @@ class WhiteboardUI:
         
         # Draw color palette
         for button in self.color_buttons:
-            # Highlight selected color (only if not erasing)
-            if button['color'] == self.current_color and not self.is_erasing:
+            # Highlight selected color
+            if button['color'] == self.current_color:
                 pygame.draw.rect(self.screen, (100, 100, 255), button['rect'].inflate(6, 6), 3)
             
             pygame.draw.rect(self.screen, button['color'], button['rect'])
@@ -103,24 +96,12 @@ class WhiteboardUI:
             display_radius = min(button['size'], 15)
             pygame.draw.circle(self.screen, (0, 0, 0), center, display_radius)
         
-        # Draw eraser button
-        if self.is_erasing:
-            pygame.draw.rect(self.screen, (100, 255, 100), self.eraser_button)
-        else:
-            pygame.draw.rect(self.screen, (200, 200, 200), self.eraser_button)
-        pygame.draw.rect(self.screen, (0, 0, 0), self.eraser_button, 2)
-        
-        # Draw text on eraser button
-        font = pygame.font.Font(None, 24)
-        text = font.render("Eraser", True, (0, 0, 0))
-        text_rect = text.get_rect(center=self.eraser_button.center)
-        self.screen.blit(text, text_rect)
-        
         # Draw clear button
         pygame.draw.rect(self.screen, (255, 100, 100), self.clear_button)
         pygame.draw.rect(self.screen, (0, 0, 0), self.clear_button, 2)
         
         # Draw text on clear button
+        font = pygame.font.Font(None, 24)
         text = font.render("Clear", True, (255, 255, 255))
         text_rect = text.get_rect(center=self.clear_button.center)
         self.screen.blit(text, text_rect)
@@ -147,7 +128,6 @@ class WhiteboardUI:
         for button in self.color_buttons:
             if button['rect'].collidepoint(pos):
                 self.current_color = button['color']
-                self.is_erasing = False
                 return
         
         # Check brush size clicks
@@ -156,82 +136,21 @@ class WhiteboardUI:
                 self.current_radius = button['size']
                 return
         
-        # Check eraser button
-        if self.eraser_button.collidepoint(pos):
-            self.is_erasing = not self.is_erasing
-            return
-        
         # Check clear button
         if self.clear_button.collidepoint(pos):
             self.points.clear()
             return
     
-    def interpolate_points(self, start_pos, end_pos):
-        """Generate interpolated points between two positions for smooth lines"""
-        x1, y1 = start_pos
-        x2, y2 = end_pos
-        
-        # Calculate distance between points
-        distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        
-        # Calculate number of interpolation steps based on distance and radius
-        # This ensures smooth lines without gaps
-        steps = max(int(distance / (self.current_radius * 0.3)), 1)
-        
-        interpolated = []
-        for i in range(steps + 1):
-            t = i / steps if steps > 0 else 0
-            x = x1 + (x2 - x1) * t
-            y = y1 + (y2 - y1) * t
-            interpolated.append((x, y))
-        
-        return interpolated
-    
     def add_point(self, pos):
-        """Add a new drawing point with interpolation"""
+        """Add a new drawing point"""
         x, y = pos
         
         # Only draw on canvas area (below toolbar)
         if y > self.canvas_y_offset:
-            # If we have a last position, interpolate between them
-            if self.last_pos is not None:
-                interpolated_positions = self.interpolate_points(self.last_pos, pos)
-                for interp_pos in interpolated_positions:
-                    point = Point(interp_pos[0], interp_pos[1], self.width, self.height, 
-                                self.current_radius, self.current_color)
-                    self.points.append(point)
-            else:
-                # First point, just add it
-                point = Point(x, y, self.width, self.height, self.current_radius, self.current_color)
-                self.points.append(point)
-            
-            self.last_pos = pos
-
-    def erase_point(self, pos):
-        """Erase points near the cursor position"""
-        x, y = pos
-        
-        # Only erase on canvas area (below toolbar)
-        if y > self.canvas_y_offset:
-            # Eraser radius is larger than current brush size for easier erasing
-            erase_radius = self.current_radius * 2
-            
-            # Find and remove points within eraser radius
-            points_to_remove = []
-            for point in self.points:
-                point_x = point.getPosX()
-                point_y = point.getPosY()
-                
-                # Calculate distance from cursor to point
-                distance = math.sqrt((x - point_x)**2 + (y - point_y)**2)
-                
-                # If point is within eraser radius, mark for removal
-                if distance <= erase_radius + point.getRadScaled():
-                    points_to_remove.append(point)
-            
-            # Remove all marked points
-            for point in points_to_remove:
-                self.points.remove(point)
+            point = Point(x, y, self.width, self.height, self.current_radius, self.current_color)
+            self.points.append(point)
+    
+    #def erase_point(self, pos)
 
     def run(self):
         """Main application loop"""
@@ -251,23 +170,15 @@ class WhiteboardUI:
                             self.handle_click(mouse_pos)
                         else:
                             self.is_drawing = True
-                            if self.is_erasing:
-                                self.erase_point(mouse_pos)
-                            else:
-                                self.add_point(mouse_pos)
+                            self.add_point(mouse_pos)
                 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         self.is_drawing = False
-                        self.last_pos = None  # Reset last position when done drawing
                 
                 elif event.type == pygame.MOUSEMOTION:
                     if self.is_drawing:
-                        mouse_pos = pygame.mouse.get_pos()
-                        if self.is_erasing:
-                            self.erase_point(mouse_pos)
-                        else:
-                            self.add_point(mouse_pos)
+                        self.add_point(pygame.mouse.get_pos())
             
             # Clear screen
             self.screen.fill(self.bg_color)
@@ -287,3 +198,7 @@ class WhiteboardUI:
 if __name__ == "__main__":
     app = WhiteboardUI()
     app.run()
+
+class Client:
+    def __init__(self, host, port):
+        pass
