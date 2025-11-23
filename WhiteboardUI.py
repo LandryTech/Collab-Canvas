@@ -1,10 +1,12 @@
 import pygame
 import sys
 import math
+import socket
 from point import Point
+from networkClient import NetworkClient
 
 class WhiteboardUI:
-    def __init__(self, width=1920, height=1080):
+    def __init__(self, width=1920, height=1080, server_ip="127.0.0.1", server_port=5002):
         pygame.init()
         
         # Set up display
@@ -13,8 +15,19 @@ class WhiteboardUI:
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Collaborative Whiteboard")
         
+        # Initialize network client
+        try:
+            self.client = NetworkClient(server_ip, server_port)
+            # Set socket to non-blocking mode to prevent freezing
+            self.client.client_socket.setblocking(False)
+            print(f"Connected to server at {server_ip}:{server_port}")
+        except Exception as e:
+            print(f"Failed to connect to server: {e}")
+            sys.exit(1)
+        
         # Drawing state
         self.points = []
+        self.new_points_this_frame = []  # Track points drawn this frame
         self.current_color = Point.BLACK
         self.current_radius = 5
         self.is_drawing = False
@@ -200,10 +213,12 @@ class WhiteboardUI:
                     point = Point(interp_pos[0], interp_pos[1], self.width, self.height, 
                                 self.current_radius, self.current_color)
                     self.points.append(point)
+                    self.new_points_this_frame.append(point)
             else:
                 # First point, just add it
                 point = Point(x, y, self.width, self.height, self.current_radius, self.current_color)
                 self.points.append(point)
+                self.new_points_this_frame.append(point)
             
             self.last_pos = pos
 
@@ -232,12 +247,55 @@ class WhiteboardUI:
             # Remove all marked points
             for point in points_to_remove:
                 self.points.remove(point)
+    
+    def send_points(self):
+        """Send new points drawn this frame to the server"""
+        try:
+            if self.new_points_this_frame:
+                # Create list of string representations (decode the bytes)
+                msg_list = [point.toStringEncode().decode() for point in self.new_points_this_frame]
+                self.client.send(msg_list)
+            else:
+                # Send empty message if no points drawn
+                self.client.send("NONE")
+        except Exception as e:
+            print(f"Error sending points: {e}")
+    
+    def receive_points(self):
+        """Receive and add points from other clients (non-blocking)"""
+        try:
+            # Try to receive data (won't block since socket is non-blocking)
+            data = self.client.client_socket.recv(1024)
+            
+            if data:
+                decoded = data.decode().split('<')
+                
+                if decoded and decoded[0] != "NONE":
+                    # Process each received point message
+                    for msg in decoded:
+                        if msg and msg != "NONE" and msg != "":
+                            # Try to initialize point from received message
+                            msg_bytes = msg.encode()
+                            point = Point.initialization(msg_bytes, self.width, self.height)
+                            
+                            # Add point if initialization was successful
+                            if point is not None:
+                                self.points.append(point)
+        except socket.error as e:
+            # socket.error is raised when no data is available (non-blocking)
+            # This is expected and normal, so we just pass
+            pass
+        except Exception as e:
+            print(f"Error receiving points: {e}")
 
     def run(self):
         """Main application loop"""
         running = True
         
         while running:
+            # Clear new points from previous frame
+            self.new_points_this_frame = []
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -269,6 +327,10 @@ class WhiteboardUI:
                         else:
                             self.add_point(mouse_pos)
             
+            # Network operations - send and receive every frame
+            self.send_points()
+            self.receive_points()
+            
             # Clear screen
             self.screen.fill(self.bg_color)
             
@@ -280,10 +342,13 @@ class WhiteboardUI:
             pygame.display.flip()
             self.clock.tick(60)  # 60 FPS
         
+        # Clean up
+        self.client.stop()
         pygame.quit()
         sys.exit()
 
 
 if __name__ == "__main__":
-    app = WhiteboardUI()
+    # Change the IP address to match your server
+    app = WhiteboardUI(server_ip="127.0.0.1", server_port=5002)
     app.run()
