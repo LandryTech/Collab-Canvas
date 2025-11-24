@@ -1,7 +1,7 @@
 from networkServer import NetworkServer
 
 def main():
-    server = NetworkServer('', 5002)
+    server = NetworkServer('0.0.0.0', 5002)
     server.start()
 
 if __name__ == "__main__":

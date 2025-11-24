@@ -140,17 +140,42 @@ class WhiteboardUI:
     
     def draw_canvas(self):
         """Draw all points on the canvas"""
+        points_to_remove = []
+        
         for point in self.points:
-            # Update point dimensions if window size changed
-            point.setWidth(self.width)
-            point.setHeight(self.height)
-            
-            pygame.draw.circle(
-                self.screen,
-                point.getColor(),
-                (int(point.getPosX()), int(point.getPosY())),
-                int(point.getRadScaled())
-            )
+            try:
+                # Update point dimensions if window size changed
+                point.setWidth(self.width)
+                point.setHeight(self.height)
+                
+                # Get position and radius
+                x = int(point.getPosX())
+                y = int(point.getPosY())
+                radius = int(point.getRadScaled())
+                
+                # Validate values to prevent crashes
+                if (0 <= x <= self.width and 
+                    0 <= y <= self.height and 
+                    1 <= radius <= 1000):
+                    
+                    pygame.draw.circle(
+                        self.screen,
+                        point.getColor(),
+                        (x, y),
+                        radius
+                    )
+                else:
+                    # Mark invalid point for removal
+                    points_to_remove.append(point)
+            except (ValueError, OverflowError, TypeError) as e:
+                # Mark problematic point for removal
+                points_to_remove.append(point)
+                print(f"Invalid point detected and removed: {e}")
+        
+        # Remove invalid points
+        for point in points_to_remove:
+            if point in self.points:
+                self.points.remove(point)
     
     def handle_click(self, pos):
         """Handle mouse clicks on UI elements"""
@@ -274,13 +299,22 @@ class WhiteboardUI:
                     # Process each received point message
                     for msg in decoded:
                         if msg and msg != "NONE" and msg != "":
-                            # Try to initialize point from received message
-                            msg_bytes = msg.encode()
-                            point = Point.initialization(msg_bytes, self.width, self.height)
-                            
-                            # Add point if initialization was successful
-                            if point is not None:
-                                self.points.append(point)
+                            try:
+                                # Try to initialize point from received message
+                                msg_bytes = msg.encode()
+                                point = Point.initialization(msg_bytes, self.width, self.height)
+                                
+                                # Add point if initialization was successful and values are valid
+                                if point is not None:
+                                    # Validate point has reasonable values
+                                    if (0 <= point.getPercX() <= 1 and 
+                                        0 <= point.getPercY() <= 1 and 
+                                        0 < point.getRadScaled() < 1000):
+                                        self.points.append(point)
+                                    else:
+                                        print(f"Received invalid point data: {msg}")
+                            except Exception as e:
+                                print(f"Error processing point: {e}")
         except socket.error as e:
             # socket.error is raised when no data is available (non-blocking)
             # This is expected and normal, so we just pass
