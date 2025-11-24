@@ -5,13 +5,21 @@ import socket
 from point import Point
 from networkClient import NetworkClient
 
+global_ServerIP = "10.30.81.166"
 class WhiteboardUI:
-    def __init__(self, width=1920, height=1080, server_ip="127.0.0.1", server_port=5002):
+    def __init__(self, width=None, height=None, server_ip=global_ServerIP, server_port=5002):
         pygame.init()
         
         # Set up display
-        self.width = width
-        self.height = height
+        if width is None or height is None:
+            display_info = pygame.display.Info()
+            self.width = int(display_info.current_w * 0.75)
+            self.height = int(display_info.current_h * 0.75)
+        else:
+            self.width = width
+            self.height = height
+        
+        
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Collaborative Whiteboard")
         
@@ -384,5 +392,5 @@ class WhiteboardUI:
 
 if __name__ == "__main__":
     # Change the IP address to match your server
-    app = WhiteboardUI(server_ip="127.0.0.1", server_port=5002)
+    app = WhiteboardUI(server_ip=global_ServerIP, server_port=5002)
     app.run()
