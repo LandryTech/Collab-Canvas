@@ -4,9 +4,9 @@ import sys
 
 # Start server in background
 if sys.platform == "win32":
-    subprocess.Popen(["python", "serverTest.py"], creationflags=subprocess.CREATE_NEW_CONSOLE)
+    subprocess.Popen(["python", "collabServer.py"], creationflags=subprocess.CREATE_NEW_CONSOLE)
 else:
-    subprocess.Popen(["python", "serverTest.py"])
+    subprocess.Popen(["python", "collabServer.py"])
 
 # Give server time to start
 time.sleep(2)
