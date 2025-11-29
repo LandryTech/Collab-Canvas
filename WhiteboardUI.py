@@ -5,7 +5,7 @@ import socket
 from point import Point
 from networkClient import NetworkClient
 
-global_ServerIP = "10.30.81.166"
+global_ServerIP = "192.168.1.163"
 class WhiteboardUI:
     def __init__(self, width=None, height=None, server_ip=global_ServerIP, server_port=5002):
         pygame.init()
@@ -20,8 +20,11 @@ class WhiteboardUI:
             self.height = height
         
         
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Collaborative Whiteboard")
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+
+        g = math.gcd(self.width, self.height)
+        ratio = f"{self.width//g}:{self.height//g}"
+        pygame.display.set_caption(f"Collaborative Whiteboard - {self.width}x{self.height} ({ratio})")
         
         # Initialize network client
         try:
@@ -368,6 +371,14 @@ class WhiteboardUI:
                             self.erase_point(mouse_pos)
                         else:
                             self.add_point(mouse_pos)
+                
+                elif event.type == pygame.VIDEORESIZE:
+                    self.width, self.height = event.w, event.h
+                    self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+
+                    g = math.gcd(self.width, self.height)
+                    ratio = f"{self.width//g}:{self.height//g}"
+                    pygame.display.set_caption(f"Collaborative Whiteboard - {self.width}x{self.height} ({ratio})")
             
             # Network operations - send and receive every frame
             self.send_points()
@@ -392,5 +403,5 @@ class WhiteboardUI:
 
 if __name__ == "__main__":
     # Change the IP address to match your server
-    app = WhiteboardUI(server_ip=global_ServerIP, server_port=5002)
+    app = WhiteboardUI(server_ip="", server_port=5002)
     app.run()

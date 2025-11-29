@@ -5,6 +5,10 @@ class NetworkClient:
         self.ip = server_ip
         self.port = server_port
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        if self.ip == "":
+            self.ip = self.client_socket.getsockname()[0]
+
         self.client_socket.connect((self.ip, self.port))
 
     def send(self, msg):

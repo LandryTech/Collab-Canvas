@@ -16,8 +16,10 @@ class Point:
 
     def __init__(self, x, y, w, h, r, c):
         self.pointPerc = [(x / w), (y / h)]
-        self.pointRad = r * (h / w)
+        self.pointRad = r
         self.pointColor = c
+        self.initCanvasWidth = w
+        self.initCanvasHeight = h
         self.canvasWidth = w
         self.canvasHeight = h
     
@@ -60,13 +62,13 @@ class Point:
     
     # Returns the radius of the point
     def getRad(self):
-        return (self.pointRad / (self.getHeight() / self.getWidth()))
+        return self.pointRad
     
     # Returns the radius of the point scaled by screen size
     def getRadScaled(self):
-        return self.pointRad
+        return self.getRad() * self.getCanvasScale()
     
-     # Set canvas width
+    # Set canvas width
     def setWidth(self, w):
         self.canvasWidth = w
     
@@ -78,6 +80,14 @@ class Point:
     def setColor(self, c):
         self.pointColor = c
     
+    # Returns the original width of the canvas when the point was drawn
+    def getInitWidth(self):
+        return self.initCanvasWidth
+    
+    # Returns the original height of the canvas when the point was drawn
+    def getInitHeight(self):
+        return self.initCanvasHeight
+    
     # Returns canvas width
     def getWidth(self):
         return self.canvasWidth
@@ -85,6 +95,10 @@ class Point:
     # Returns canvas height
     def getHeight(self):
         return self.canvasHeight
+    
+    # Returns the amount by which the canvas size has changed since the point was created
+    def getCanvasScale(self):
+        return ((self.getWidth() / self.getInitWidth()) + (self.getHeight() / self.getInitHeight())) / 2
 
     # Returns the point color
     def getColor(self):
