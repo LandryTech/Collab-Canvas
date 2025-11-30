@@ -34,7 +34,12 @@ class WhiteboardUI:
             print(f"Connected to server at {server_ip}:{server_port}")
         except Exception as e:
             print(f"Failed to connect to server: {e}")
-            sys.exit(1)
+            
+            self.client = NetworkClient(server_ip, server_port)
+            # Set socket to non-blocking mode to prevent freezing
+            self.client.client_socket.setblocking(False)
+            print(f"Connected to server at {server_ip}:{server_port}")
+            #sys.exit(1)
         
         # Drawing state
         self.points = []

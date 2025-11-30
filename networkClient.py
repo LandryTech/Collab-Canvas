@@ -1,4 +1,6 @@
 import socket
+import subprocess
+import time
 
 class NetworkClient:
     def __init__(self, server_ip, server_port):
@@ -7,9 +9,24 @@ class NetworkClient:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         if self.ip == "":
-            self.ip = self.client_socket.getsockname()[0]
+            self.ip = self.get_local_wifi_ip()
 
-        self.client_socket.connect((self.ip, self.port))
+        try:
+            self.client_socket.connect((self.ip, self.port))
+        except Exception:
+            subprocess.Popen(["python", "collabServer.py"])
+            time.sleep(2)
+            self.client_socket.connect((self.ip, self.port))
+    
+    def get_local_wifi_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+        except:
+            return "127.0.0.1"
+        finally:
+            s.close()
 
     def send(self, msg):
         endChar = "<"
