@@ -1,3 +1,9 @@
+""" PURPOSE
+—POINT—
+A class for the WhiteboardUI program. It is the representation
+of a point that users draw on the canvas. 
+"""
+
 import ast # Tuple parsing
 
 class Point:
@@ -30,7 +36,7 @@ class Point:
             xPerc = float(msgSplit[0])
             yPerc = float(msgSplit[1])
             rPerc = float(msgSplit[2])
-            color = ast.literal_eval(msgSplit[3])
+            color = ast.literal_eval(msgSplit[3]) # Converts a String into an actual tuple
 
             return sI((xPerc * width), (yPerc * height), width, height, (rPerc / (height / width)), color)
         except Exception:
@@ -127,3 +133,11 @@ class Point:
         #ex. '0.5:0.5:2.8125:(255, 192, 203)'
 
 
+""" REFERENCES
+—AST LITERAL EVAL—
+Used for converting a String into a tuple. The point class needs to be able to extract the part
+of a string representing the color of the point to be able to instantiate objects from information
+received from other clients.
+    ex. "color = ast.literal_eval(msgSplit[3])"
+[1] https://www.geeksforgeeks.org/python/difference-between-eval-and-ast-literal-eval-in-python/
+"""

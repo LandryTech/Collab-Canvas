@@ -1,3 +1,9 @@
+""" PURPOSE
+—NETWORK SERVER—
+A class for the collabServer program that starts a server for WhiteboardUI.
+It retrieves messages from clients and broadcasts them to all other clients.
+"""
+
 import socket
 import threading
 
@@ -61,3 +67,12 @@ class NetworkServer:
             thread = threading.Thread(target=self.handle_client, args=(client_socket, addr))
             thread.daemon = True
             thread.start()
+
+""" REFERENCES
+—THREADING—
+The server uses threading to process receiving point data from multiple clients at a time.
+Without threading, the server needs to receive messages from every client before being able
+to broadcast messages back to the clients.
+[1] https://www.geeksforgeeks.org/python/multithreading-python-set-1/
+[2] https://www.geeksforgeeks.org/python/socket-programming-multi-threading-python/
+"""

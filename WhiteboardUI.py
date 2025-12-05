@@ -5,7 +5,7 @@ import socket
 from point import Point
 from networkClient import NetworkClient
 
-global_ServerIP = "192.168.1.163"
+global_ServerIP = "10.220.40.123" # Set this to the IP of the server before running the program.
 class WhiteboardUI:
     def __init__(self, width=None, height=None, server_ip=global_ServerIP, server_port=5002):
         pygame.init()

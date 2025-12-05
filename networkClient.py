@@ -1,32 +1,17 @@
+""" PURPOSE
+—NETWORK CLIENT—
+A class for the WhiteboardUI that is intended to send
+and receive messages relating to point data.
+"""
+
 import socket
-import subprocess
-import time
 
 class NetworkClient:
     def __init__(self, server_ip, server_port):
         self.ip = server_ip
         self.port = server_port
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        if self.ip == "":
-            self.ip = self.get_local_wifi_ip()
-
-        try:
-            self.client_socket.connect((self.ip, self.port))
-        except Exception:
-            subprocess.Popen(["python", "collabServer.py"])
-            time.sleep(2)
-            self.client_socket.connect((self.ip, self.port))
-    
-    def get_local_wifi_ip(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            s.connect(("8.8.8.8", 80))
-            return s.getsockname()[0]
-        except:
-            return "127.0.0.1"
-        finally:
-            s.close()
+        self.client_socket.connect((self.ip, self.port))
 
     def send(self, msg):
         endChar = "<"
